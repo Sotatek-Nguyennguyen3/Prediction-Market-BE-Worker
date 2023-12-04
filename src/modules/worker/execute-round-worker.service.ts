@@ -95,7 +95,6 @@ export class ExecuteRoundWorkerService {
   async doCrawJob() {
     do {
       try {
-        console.log("zzz3");
 
         let isWaiting = await this.crawlData();
         if (isWaiting) {
@@ -294,11 +293,8 @@ export class ExecuteRoundWorkerService {
       const signedRaw = `0x${signedTx.serialize().toString("hex")}`;
 
       // send the transaction
-      console.log("provider", this.provider)
-      console.log("signedRaw", signedRaw);
       
       const receipt = await this.provider.sendTransaction(signedRaw);
-      console.log("receipt", receipt);
       
       logger.info(
         `${
@@ -335,7 +331,6 @@ export class ExecuteRoundWorkerService {
       const queryResult: any = await axios.get(
         `https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000`
       );
-      console.log("queryResult", queryResult)
 
       console.log("queryResult", queryResult.data.Price);
       
@@ -836,7 +831,7 @@ export class ExecuteRoundWorkerService {
           this._executeRoundContract._address;
 
         // get latest block number from zk-sync
-        latestBlockInDb.blockNumber = 5582812;
+        latestBlockInDb.blockNumber = 28298722;
 
         if (latestBlockInDb.blockNumber) {
           await manager.getRepository(LatestBlock).save(latestBlockInDb);
@@ -854,7 +849,8 @@ export class ExecuteRoundWorkerService {
         latestTempBlockInDb.blockNumber = latestBlockInDb.blockNumber;
       }
 
-      //TODO: SET REQUIRED CONFIRMATION BLOCK
+      //TODO: SET REQUIRED CONFIRMATION 
+      console.log("=========latestBlockInDb", latestBlockInDb)
       let fromBlock = latestBlockInDb.blockNumber + 1;
       // let toBlock = latestBlock - this.currency.requiredConfirmations;
       let toBlock = latestBlock;
@@ -872,7 +868,8 @@ export class ExecuteRoundWorkerService {
       if (tempToBlock > tempFromBlock + MAX_BLOCK_PER_TIME) {
         tempToBlock = tempFromBlock + MAX_BLOCK_PER_TIME;
       }
-
+      console.log("fromBlock", fromBlock)
+      console.log("toBlock", toBlock)
       if (fromBlock <= toBlock) {
         logger.info(
           `${this.currency.network} ExecuteRoundWorkerService::crawlData ${this._executeRoundContract._address} Crawling from block ${fromBlock} => ${toBlock} (lastest block: ${latestBlock})`
