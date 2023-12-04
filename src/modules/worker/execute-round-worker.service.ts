@@ -332,7 +332,7 @@ export class ExecuteRoundWorkerService {
         `https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000`
       );
 
-      console.log("queryResult", queryResult.data.Price);
+      console.log("queryResult 1", queryResult.data.Price);
       
       if (!queryResult || !queryResult?.data.Price) {
         logger.error(
@@ -457,9 +457,7 @@ export class ExecuteRoundWorkerService {
       const queryResult: any = await axios.get(
         `https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000`
       );
-      console.log("queryResult", queryResult)
 
-      console.log("queryResult", queryResult.data.Price);
 
       if (!queryResult || !queryResult.data.Price){
          console.log( `${this.currency.network} ExecuteRoundWorkerService::executeRound No price found`)
