@@ -47,7 +47,7 @@ export const currencyConfigDataSeeds: ICurrencyConfigInterface[] = [
 
    {
     swapId: 1,
-    network: " Avax",
+    network: "fuji",
     chainName: " Avalanche Fuji Testnet",
     chainId: "43113",
     tokenAddresses:'{"mockToken":"0xf13e2e8F77585c7303baAF7F2A7B724B1283Ca81","predictionMarket":"0xF735A246b33cb4c2518E28174bEb9F1A94Cc2252"}',
@@ -55,7 +55,7 @@ export const currencyConfigDataSeeds: ICurrencyConfigInterface[] = [
     requiredConfirmations: 12,
     tempRequiredConfirmations: 0,
     scanApi: "https://api-goerli.etherscan.io",
-    rpcEndpoint: "​https://api.avax-test.network/ext/bc/C/rpc",
+    rpcEndpoint: "https://api.zan.top/node/v1/avax/fuji/public/ext/bc/C/rpc",
     explorerEndpoint: "https://testnet.snowtrace.dev/",
   },
 ];

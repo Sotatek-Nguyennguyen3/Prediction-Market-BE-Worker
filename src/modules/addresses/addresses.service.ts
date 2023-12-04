@@ -68,8 +68,9 @@ export class AddressesService {
       if (!currency) {
         throw Causes.WALLET_WITH_CURRENCY_NOT_CREATED;
       }
-      const dataKey = await this.kmsDataKeysRepository.findOne();
-
+      //const dataKey = await this.kmsDataKeysRepository.findOne();
+      const dataKey:any ='8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162'
+      
       let addressRecord: any;
 
       await getConnection().transaction(async (transactional) => {
@@ -86,13 +87,16 @@ export class AddressesService {
         }
 
         // address not exists, create new address
+        console.log("zzz2 record");
+        
         addressRecord = await this.createWalletAddress(
           currency,
           dataKey,
           transactional
         );
+        console.log("addressRecord", addressRecord)
       });
-
+    console.log("add", addressRecord)
       return addressRecord;
     } finally {
       lock.release();
@@ -115,6 +119,7 @@ export class AddressesService {
     const addr = this.addressesRepository.create({
       address,
       secret,
+      note: "note"
     });
     await entityManager.save(addr);
 

@@ -48,16 +48,16 @@ const PREFIX_KEY_TEMP = "crawl_execute_round_temp_";
 import { Provider } from "zksync-web3";
 export class ExecuteRoundWorkerService {
   _web3 = new Web3(this.currency.rpcEndpoint);
-  provider = new Provider("​https://api.avax-test.network/ext/bc/C/rpc");
+  provider = new Provider(this.currency.rpcEndpoint);
   _common = Common.custom({ chainId: Number(this.currency.chainId) });
 
-  _excuteRoundAbi = fs.readFileSync(
-    "./PredictionMarket.json",
-    "utf8"
-  );
+  // _excuteRoundAbi = fs.readFileSync(
+  //   "./PredictionMarket.json",
+  //   "utf8"
+  // );
   
   _executeRoundContract = new this._web3.eth.Contract(
-    JSON.parse(ABI),
+    ABI,
     JSON.parse(this.currency.tokenAddresses)?.["predictionMarket"]
   );
 
@@ -79,8 +79,8 @@ export class ExecuteRoundWorkerService {
   async _setup() {
     console.log("zzz1");
 
-    this._addminAddress = await this.addressesService.getAddress(this.currency);
-    console.log("zzz1");
+    this._addminAddress = '0x761f59f5DD77B17223881a50200c2A2aA8Ec8c0E'
+    console.log("zzz12");
 
     if (!this._addminAddress) {
       logger.error(
@@ -129,11 +129,11 @@ export class ExecuteRoundWorkerService {
       try {
         //temporary time delay 5 seconds every new round
         await this.genesisStartRound();
-        await this.delay(5 * 60 * 1000);
+        await this.delay( 60 * 1000);
         await this.genesisLockRound();
         do {
           try {
-            await this.delay(5 * 60 * 1000);
+            await this.delay( 60 * 1000);
             await this.executeRound();
           } catch (e) {
             logger.error(
@@ -142,6 +142,7 @@ export class ExecuteRoundWorkerService {
             //call pause until success, call unpause until success
             do {
               try {
+                
                 await this.pause();
               } catch (e) {
                 logger.error(
@@ -207,7 +208,7 @@ export class ExecuteRoundWorkerService {
       }
 
       // construct the transaction data
-      const fromAddress = this._addminAddress.address;
+      const fromAddress = this._addminAddress;
       const nonce = await this._web3.eth.getTransactionCount(fromAddress);
       const _gasPrice = await this.getGasPrice();
 
@@ -216,9 +217,9 @@ export class ExecuteRoundWorkerService {
         `${this.currency.network} ExecuteRoundWorkerService::genesisStartRound gasPrice=${gasPrice}`
       );
 
-      const startTime = Math.round(Date.now() / 1000);
+      //const startTime = Math.round(Date.now() / 1000);
       let _gasLimit = await this._executeRoundContract.methods
-        .genesisStartRound(startTime)
+        .genesisStartRound()
         .estimateGas({ from: fromAddress });
 
       if (_gasLimit < 150000) {
@@ -259,7 +260,7 @@ export class ExecuteRoundWorkerService {
 
       const txParams = {
         data: this._executeRoundContract.methods
-          .genesisStartRound(startTime)
+          .genesisStartRound()
           .encodeABI(),
         gasLimit: this._web3.utils.toHex(gasLimit),
         gasPrice: this._web3.utils.toHex(gasPrice),
@@ -272,28 +273,33 @@ export class ExecuteRoundWorkerService {
       const unsignedRaw = tx.serialize().toString("hex");
 
       // sign the transaction
-      const private_key = JSON.parse(this._addminAddress.secret).private_key;
-      const kms_data_key_id = JSON.parse(
-        this._addminAddress.secret
-      ).kms_data_key_id;
-      let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
+      const private_key = '8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162';
+      // const kms_data_key_id = JSON.parse(
+      //   this._addminAddress.secret
+      // ).kms_data_key_id;
+      // let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
 
-      if (secret.startsWith("0x")) {
-        secret = secret.substr(2);
-      }
+      // if (secret.startsWith("0x")) {
+      //   secret = secret.substr(2);
+      // }
 
       const ethTx = EthereumTx.fromSerializedTx(
         Buffer.from(unsignedRaw, "hex"),
         { common: this._common }
       );
-      const privateKey = Buffer.from(secret, "hex");
+      const privateKey = Buffer.from('8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162', "hex");
       const signedTx = ethTx.sign(privateKey);
 
       const txid = `0x${signedTx.hash().toString("hex")}`;
       const signedRaw = `0x${signedTx.serialize().toString("hex")}`;
 
       // send the transaction
+      console.log("provider", this.provider)
+      console.log("signedRaw", signedRaw);
+      
       const receipt = await this.provider.sendTransaction(signedRaw);
+      console.log("receipt", receipt);
+      
       logger.info(
         `${
           this.currency.network
@@ -301,7 +307,8 @@ export class ExecuteRoundWorkerService {
           receipt
         )}`
       );
-
+      console.log(("zzzzzzzzzzzz"));
+      
       // delay 12 seconds (buffer time)
       await this.delay(12 * 1000);
     } catch (e) {
@@ -326,9 +333,13 @@ export class ExecuteRoundWorkerService {
       //get current price
       //TODO: move to a separate function
       const queryResult: any = await axios.get(
-        `https://api.etherscan.io/api?module=stats&action=ethprice&apikey=F4ZBZI5ZVN2HZE3UTW1A6UZCAIZ6P4NYD9`
+        `https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000`
       );
-      if (!queryResult || !queryResult?.data?.result?.ethusd) {
+      console.log("queryResult", queryResult)
+
+      console.log("queryResult", queryResult.data.Price);
+      
+      if (!queryResult || !queryResult?.data.Price) {
         logger.error(
           `${this.currency.network} ExecuteRoundWorkerService::genesisLockRound No price found`
         );
@@ -337,10 +348,10 @@ export class ExecuteRoundWorkerService {
       logger.info(
         `${this.currency.network} ExecuteRoundWorkerService::genesisLockRound queryResult=${queryResult}`
       );
-      const currentPrice =
-        (queryResult.data.result.ethusd * 1000).toString() + decimalsString;
+      const currentPrice =(queryResult.data.Price * 1000000000000000).toString() ;
+      console.log("currentPrice", currentPrice)
       // construct the transaction data
-      const fromAddress = this._addminAddress.address;
+      const fromAddress = this._addminAddress;
       const nonce = await this._web3.eth.getTransactionCount(fromAddress);
       const _gasPrice = await this.getGasPrice();
 
@@ -348,10 +359,11 @@ export class ExecuteRoundWorkerService {
       logger.info(
         `${this.currency.network} ExecuteRoundWorkerService::genesisLockRound gasPrice=${gasPrice}`
       );
-
+      console.log("this._web3.utils.toBN(currentPrice)", this._web3.utils.toBN(currentPrice));
+      
       const lockTime = Math.round(Date.now() / 1000);
       let _gasLimit = await this._executeRoundContract.methods
-        .genesisLockRound(this._web3.utils.toBN(currentPrice), lockTime)
+        .genesisLockRound(this._web3.utils.toBN(currentPrice))
         .estimateGas({ from: fromAddress });
 
       if (_gasLimit < 150000) {
@@ -384,7 +396,7 @@ export class ExecuteRoundWorkerService {
 
       const txParams = {
         data: this._executeRoundContract.methods
-          .genesisLockRound(currentPrice, lockTime)
+          .genesisLockRound(currentPrice)
           .encodeABI(),
         gasLimit: this._web3.utils.toHex(gasLimit),
         gasPrice: this._web3.utils.toHex(gasPrice),
@@ -397,21 +409,21 @@ export class ExecuteRoundWorkerService {
       const unsignedRaw = tx.serialize().toString("hex");
 
       // sign the transaction
-      const private_key = JSON.parse(this._addminAddress.secret).private_key;
-      const kms_data_key_id = JSON.parse(
-        this._addminAddress.secret
-      ).kms_data_key_id;
-      let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
+      const private_key = '8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162';
+      // const kms_data_key_id = JSON.parse(
+      //   this._addminAddress.secret
+      // ).kms_data_key_id;
+      // let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
 
-      if (secret.startsWith("0x")) {
-        secret = secret.substr(2);
-      }
+      // if (secret.startsWith("0x")) {
+      //   secret = secret.substr(2);
+      // }
 
       const ethTx = EthereumTx.fromSerializedTx(
         Buffer.from(unsignedRaw, "hex"),
         { common: this._common }
       );
-      const privateKey = Buffer.from(secret, "hex");
+      const privateKey = Buffer.from('8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162', "hex");
       const signedTx = ethTx.sign(privateKey);
 
       const txid = `0x${signedTx.hash().toString("hex")}`;
@@ -435,7 +447,7 @@ export class ExecuteRoundWorkerService {
   }
 
   //excute round with current price
-  //TODO: move handle transaction part to a separate function
+  //TODO: move handle transaction part to a separate funfction
   async executeRound() {
     try {
       if (!this._executeRoundContract._address) {
@@ -448,22 +460,25 @@ export class ExecuteRoundWorkerService {
       //get current price
       //TODO: move to a separate function
       const queryResult: any = await axios.get(
-        `https://api.etherscan.io/api?module=stats&action=ethprice&apikey=F4ZBZI5ZVN2HZE3UTW1A6UZCAIZ6P4NYD9`
+        `https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000`
       );
-      if (!queryResult || !queryResult?.data?.result?.ethusd) {
-        logger.error(
-          `${this.currency.network} ExecuteRoundWorkerService::executeRound No price found`
-        );
+      console.log("queryResult", queryResult)
+
+      console.log("queryResult", queryResult.data.Price);
+
+      if (!queryResult || !queryResult.data.Price){
+         console.log( `${this.currency.network} ExecuteRoundWorkerService::executeRound No price found`)
+        
         return;
       }
       logger.info(
         `${this.currency.network} ExecuteRoundWorkerService::executeRound queryResult=${queryResult}`
       );
-      const currentPrice =
-        (queryResult.data.result.ethusd * 1000).toString() + decimalsString;
+      const currentPrice =(queryResult.data.Price * 1000000000000000).toString() ;
+
 
       // construct the transaction data
-      const fromAddress = this._addminAddress.address;
+      const fromAddress = this._addminAddress;
       const nonce = await this._web3.eth.getTransactionCount(fromAddress);
       const _gasPrice = await this.getGasPrice();
 
@@ -474,7 +489,7 @@ export class ExecuteRoundWorkerService {
 
       const executeTime = Math.round(Date.now() / 1000);
       let _gasLimit = await this._executeRoundContract.methods
-        .executeRound(this._web3.utils.toBN(currentPrice), executeTime)
+        .executeRound(this._web3.utils.toBN(currentPrice))
         .estimateGas({ from: fromAddress });
 
       if (_gasLimit < 150000) {
@@ -507,7 +522,7 @@ export class ExecuteRoundWorkerService {
 
       const txParams = {
         data: this._executeRoundContract.methods
-          .executeRound(currentPrice, executeTime)
+          .executeRound(currentPrice)
           .encodeABI(),
         gasLimit: this._web3.utils.toHex(gasLimit),
         gasPrice: this._web3.utils.toHex(gasPrice),
@@ -520,21 +535,21 @@ export class ExecuteRoundWorkerService {
       const unsignedRaw = tx.serialize().toString("hex");
 
       // sign the transaction
-      const private_key = JSON.parse(this._addminAddress.secret).private_key;
-      const kms_data_key_id = JSON.parse(
-        this._addminAddress.secret
-      ).kms_data_key_id;
-      let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
+      // const private_key = JSON.parse(this._addminAddress.secret).private_key;
+      // const kms_data_key_id = JSON.parse(
+      //   this._addminAddress.secret
+      // ).kms_data_key_id;
+      // let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
 
-      if (secret.startsWith("0x")) {
-        secret = secret.substr(2);
-      }
+      // if (secret.startsWith("0x")) {
+      //   secret = secret.substr(2);
+      // }
 
       const ethTx = EthereumTx.fromSerializedTx(
         Buffer.from(unsignedRaw, "hex"),
         { common: this._common }
       );
-      const privateKey = Buffer.from(secret, "hex");
+      const privateKey = Buffer.from('8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162', "hex");
       const signedTx = ethTx.sign(privateKey);
 
       const txid = `0x${signedTx.hash().toString("hex")}`;
@@ -566,7 +581,7 @@ export class ExecuteRoundWorkerService {
       }
 
       // construct the transaction data
-      const fromAddress = this._addminAddress.address;
+      const fromAddress = this._addminAddress;
       const nonce = await this._web3.eth.getTransactionCount(fromAddress);
       const _gasPrice = await this.getGasPrice();
 
@@ -620,28 +635,32 @@ export class ExecuteRoundWorkerService {
       const unsignedRaw = tx.serialize().toString("hex");
 
       // sign the transaction
-      const private_key = JSON.parse(this._addminAddress.secret).private_key;
-      const kms_data_key_id = JSON.parse(
-        this._addminAddress.secret
-      ).kms_data_key_id;
-      let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
+      //const private_key = '8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162';
+      // const kms_data_key_id = JSON.parse(
+      //   this._addminAddress.secret
+      // ).kms_data_key_id;
+      // let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
 
-      if (secret.startsWith("0x")) {
-        secret = secret.substr(2);
-      }
+      // if (secret.startsWith("0x")) {
+      //   secret = secret.substr(2);
+      // }
 
       const ethTx = EthereumTx.fromSerializedTx(
         Buffer.from(unsignedRaw, "hex"),
         { common: this._common }
       );
-      const privateKey = Buffer.from(secret, "hex");
+      const privateKey = Buffer.from('8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162', "hex");
       const signedTx = ethTx.sign(privateKey);
 
       const txid = `0x${signedTx.hash().toString("hex")}`;
       const signedRaw = `0x${signedTx.serialize().toString("hex")}`;
 
       // send the transaction
+      console.log("this.currency.network", this.currency.network);
+      
       const receipt = await this.provider.sendTransaction(signedRaw);
+      console.log("network error");
+      
       logger.info(
         `${
           this.currency.network
@@ -654,7 +673,7 @@ export class ExecuteRoundWorkerService {
       await this.delay(12 * 1000);
     } catch (e) {
       logger.error(
-        `${this.currency.network} ExecuteRoundWorkerService::pause error=${e.message}`
+        `${this.currency.network} ExecuteRoundWorkerService::pause zz error=${e.message}`
       );
       throw e;
     }
@@ -670,7 +689,7 @@ export class ExecuteRoundWorkerService {
       }
 
       // construct the transaction data
-      const fromAddress = this._addminAddress.address;
+      const fromAddress = this._addminAddress;
       const nonce = await this._web3.eth.getTransactionCount(fromAddress);
       const _gasPrice = await this.getGasPrice();
 
@@ -724,21 +743,21 @@ export class ExecuteRoundWorkerService {
       const unsignedRaw = tx.serialize().toString("hex");
 
       // sign the transaction
-      const private_key = JSON.parse(this._addminAddress.secret).private_key;
-      const kms_data_key_id = JSON.parse(
-        this._addminAddress.secret
-      ).kms_data_key_id;
-      let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
+      // const private_key = JSON.parse(this._addminAddress.secret).private_key;
+      // const kms_data_key_id = JSON.parse(
+      //   this._addminAddress.secret
+      // ).kms_data_key_id;
+      // let secret = await this.kmsService.decrypt(private_key, kms_data_key_id);
 
-      if (secret.startsWith("0x")) {
-        secret = secret.substr(2);
-      }
+      // if (secret.startsWith("0x")) {
+      //   secret = secret.substr(2);
+      // }
 
       const ethTx = EthereumTx.fromSerializedTx(
         Buffer.from(unsignedRaw, "hex"),
         { common: this._common }
       );
-      const privateKey = Buffer.from(secret, "hex");
+      const privateKey = Buffer.from('8cd463c7d96871874f7d9b4243898ad63452bafc84930a6734d8a4c123eeb162', "hex");
       const signedTx = ethTx.sign(privateKey);
 
       const txid = `0x${signedTx.hash().toString("hex")}`;
@@ -774,7 +793,7 @@ export class ExecuteRoundWorkerService {
    */
   async crawlData() {
     return await getConnection().transaction(async (manager) => {
-      console.log("zzz2");
+      console.log("zzz2z");
       
       let latestBlockInDb = await manager
         .getRepository(LatestBlock)
@@ -789,6 +808,7 @@ export class ExecuteRoundWorkerService {
             this._executeRoundContract._address,
         })
         .getOne();
+        console.log("333zz1==3");
 
       let latestTempBlockInDb = await manager
         .getRepository(LatestBlock)
@@ -799,11 +819,14 @@ export class ExecuteRoundWorkerService {
             "_" +
             this._executeRoundContract._address,
         });
+      
+      
       const latestBlock = await getBlockNumber(
         this.currency.chainId,
         this._web3
       );
 
+      
       if (!latestBlockInDb || latestBlockInDb.blockNumber == 0) {
         latestBlockInDb = new LatestBlock();
         latestBlockInDb.currency =

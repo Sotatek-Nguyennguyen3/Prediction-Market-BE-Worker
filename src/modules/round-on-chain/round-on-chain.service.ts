@@ -75,8 +75,9 @@ export class RoundOnChainService {
     let currentPrice;
     try {
       currentPrice = await axios.get(
-        "https://api.etherscan.io/api?module=stats&action=ethprice&apikey=F4ZBZI5ZVN2HZE3UTW1A6UZCAIZ6P4NYD9"
+        "https://api.diadata.org/v1/assetQuotation/Avalanche/0x0000000000000000000000000000000000000000"
       );
+      
     } catch (error) {
       throw new Error(error);
     }
