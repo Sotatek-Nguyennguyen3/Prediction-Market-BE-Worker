@@ -1,0 +1,97 @@
+variables:
+  WORK_DIR: ${CI_PROJECT_NAME}
+  BRANCH: ${CI_COMMIT_REF_NAME}
+
+stages:
+  - build
+  - test
+  - push
+  - deploy
+  - clean
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "revert"
+      when: always
+    - when: never
+
+build:
+  stage: build
+  before_script:
+    - sudo touch .env
+    - sudo chmod 777 .env
+    - sudo echo "$ENV_FILE" >> .env
+    - sudo docker login -u $GITLAB_USERNAME -p $GITLAB_ACCESS_TOKEN registry.gitlab.com
+  script:
+    - sudo docker build -t $REGISTRY_API -f ./docker/api/Dockerfile .
+    - sudo docker build -t $REGISTRY_WORKER -f ./docker/worker/Dockerfile .
+  tags:
+    - backend
+
+health-check-api:
+  stage: test
+  before_script:
+    - sudo docker stop zksync-api-test || true
+    - sudo docker rm zksync-api-test || true
+  script:
+    - sudo docker run --name=zksync-api-test -d $REGISTRY_API
+    - sudo sleep 60
+    - if [ ! "$(sudo docker container inspect -f '{{.State.Status}}' zksync-api-test )" == "running" ]; then exit 1; fi
+  after_script:
+    - sudo docker logs zksync-api-test
+    - sudo docker stop zksync-api-test || true
+    - sudo docker rm zksync-api-test || true
+  tags:
+    - backend
+
+health-check-worker:
+  stage: test
+  before_script:
+    - sudo docker stop zksync-worker-test || true
+    - sudo docker rm zksync-worker-test || true
+  script:
+    - sudo docker run --name=zksync-worker-test -d $REGISTRY_WORKER
+    - sudo sleep 60
+    - if [ ! "$(sudo docker container inspect -f '{{.State.Status}}' zksync-worker-test )" == "running" ]; then exit 1; fi
+  after_script:
+    - sudo docker logs zksync-worker-test
+    - sudo docker stop zksync-worker-test || true
+    - sudo docker rm zksync-worker-test || true
+  tags:
+    - backend
+
+push:
+  stage: push
+  before_script:
+    - sudo docker login -u $GITLAB_USERNAME -p $GITLAB_ACCESS_TOKEN registry.gitlab.com
+  script:
+    - sudo docker push $REGISTRY_API
+    - sudo docker push $REGISTRY_WORKER
+  tags:
+    - backend
+
+deploy:
+  stage: deploy
+  before_script:
+    - sudo docker login -u $GITLAB_USERNAME -p $GITLAB_ACCESS_TOKEN registry.gitlab.com
+    - sudo docker stop zksync-api || true
+    - sudo docker stop zksync-worker || true
+    - sudo docker rm zksync-api || true
+    - sudo docker rm zksync-worker || true
+  script:
+    - sudo docker pull $REGISTRY_API
+    - sudo docker pull $REGISTRY_WORKER
+    - sudo docker run --name=zksync-api -d -p 3601:3201 --restart on-failure:5 --log-opt max-size=10m --log-opt max-file=3 $REGISTRY_API
+    - sudo docker run --name=zksync-worker -d -p 3701:3301 --restart on-failure:5 --log-opt max-size=10m --log-opt max-file=3 $REGISTRY_WORKER
+  tags:
+    - backend
+
+clean:
+  stage: clean
+  script:
+    - sudo docker image prune -a -f
+    - sudo docker container prune -f
+  tags:
+    - backend
+    
+

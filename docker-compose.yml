@@ -1,0 +1,32 @@
+version: "3"
+services:
+  db:
+    image: "mysql:8.0.25"
+    container_name: prediction-market-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: "1"
+      MYSQL_DATABASE: 'prediction-market'
+
+    ports:
+      - "3307:3306"
+    command: --default-authentication-plugin=mysql_native_password
+
+    volumes:
+      - db-prediction-market:/var/lib/mysql
+    networks:
+      - dev-prediction-market
+
+  redis:
+    image: "redis:6-alpine"
+    container_name: prediction-market-redis-v2
+    ports:
+      - 6382:6380
+    networks:
+      - dev-prediction-market
+volumes:
+  db-prediction-market:
+networks:
+  dev-prediction-market:
+    external: true
+      
