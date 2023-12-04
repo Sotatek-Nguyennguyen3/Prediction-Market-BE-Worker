@@ -81,7 +81,7 @@ export class RoundOnChainService {
     } catch (error) {
       throw new Error(error);
     }
-    return currentPrice.data.result.ethusd;
+    return currentPrice.data.Price;
   }
 
   async timeCurrentEpoch() {
