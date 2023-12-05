@@ -131,11 +131,11 @@ export class ExecuteRoundWorkerService {
       try {
         //temporary time delay 5 seconds every new round
         await this.genesisStartRound();
-        await this.delay( 60 * 1000);
+        await this.delay( 5 * 60 * 1000 +30);
         await this.genesisLockRound();
         do {
           try {
-            await this.delay( 60 * 1000);
+            await this.delay(5* 60 * 1000 +30);
             await this.executeRound();
           } catch (e) {
             logger.error(
