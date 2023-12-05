@@ -140,7 +140,7 @@ export class ExecuteRoundWorkerService {
             await this.executeRound();
           } catch (e) {
             logger.error(
-              `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+              `${this.currency.network} ExecuteRoundWorkerService::doJob error 1=${e.message}`
             );
             //call pause until success, call unpause until success
             do {
@@ -149,7 +149,7 @@ export class ExecuteRoundWorkerService {
                 await this.pause();
               } catch (e) {
                 logger.error(
-                  `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+                  `${this.currency.network} ExecuteRoundWorkerService::doJob error 2=${e.message}`
                 );
                 break;
               }
@@ -160,7 +160,7 @@ export class ExecuteRoundWorkerService {
                 await this.unPause();
               } catch (e) {
                 logger.error(
-                  `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+                  `${this.currency.network} ExecuteRoundWorkerService::doJob error 3=${e.message}`
                 );
                 break;
               }
@@ -171,7 +171,7 @@ export class ExecuteRoundWorkerService {
       } catch (e) {
         console.log(e);
         logger.error(
-          `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+          `${this.currency.network} ExecuteRoundWorkerService::doJob error 4=${e.message}`
         );
         //call pause until success, call unpause until success
         do {
@@ -179,7 +179,7 @@ export class ExecuteRoundWorkerService {
             await this.pause();
           } catch (e) {
             logger.error(
-              `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+              `${this.currency.network} ExecuteRoundWorkerService::doJob error 5=${e.message}`
             );
             break;
           }
@@ -190,7 +190,7 @@ export class ExecuteRoundWorkerService {
             await this.unPause();
           } catch (e) {
             logger.error(
-              `${this.currency.network} ExecuteRoundWorkerService::doJob error=${e.message}`
+              `${this.currency.network} ExecuteRoundWorkerService::doJob error 6=${e.message}`
             );
             break;
           }
@@ -310,7 +310,7 @@ export class ExecuteRoundWorkerService {
       console.log(("zzzzzzzzzzzz"));
       
       // delay 12 seconds (buffer time)
-      //await this.delay(60 * 1000);
+      await this.delay(5 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::genesisStartRound error=${e.message}`
@@ -323,6 +323,8 @@ export class ExecuteRoundWorkerService {
   //TODO: move handle transaction part to a separate function
   async genesisLockRound() {
     try {
+      console.log("========current Time 1", new Date().getTime())
+
       if (!this._executeRoundContract._address) {
         logger.error(
           `${this.currency.network} ExecuteRoundWorkerService::genesisLockRound No address found`
@@ -428,6 +430,7 @@ export class ExecuteRoundWorkerService {
       const txid = `0x${signedTx.hash().toString("hex")}`;
       const signedRaw = `0x${signedTx.serialize().toString("hex")}`;
 
+      console.log("current Time", new Date().getTime())
       // send the transaction
       const receipt = await this.provider.sendTransaction(signedRaw);
       logger.info(
@@ -439,7 +442,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-      //await this.delay(12 * 1000);
+      await this.delay(5 * 1000);
     } catch (e) {
       throw e;
     }
@@ -562,7 +565,7 @@ export class ExecuteRoundWorkerService {
         )}`
       );
 
-     // await this.delay(12 * 1000);
+     await this.delay(5 * 1000);
     } catch (e) {
       throw e;
     }
@@ -667,7 +670,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-      //await this.delay(12 * 1000);
+      await this.delay(5 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::pause zz error=${e.message}`
@@ -771,7 +774,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-     // await this.delay(12 * 1000);
+      await this.delay(12 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::unpause error=${e.message}`
@@ -1158,6 +1161,8 @@ export class ExecuteRoundWorkerService {
           const startRoundInfo = await this._executeRoundContract.methods
             .rounds(event.returnValues.epoch)
             .call();
+          console.log("startRoundInfo", startRoundInfo);
+          
           const blockData: any = await this.web3Cache(
             "getBlock_" + event.blockNumber,
             this._web3.eth.getBlock(event.blockNumber)
