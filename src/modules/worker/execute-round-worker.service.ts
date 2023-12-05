@@ -132,11 +132,11 @@ export class ExecuteRoundWorkerService {
       try {
         //temporary time delay 5 seconds every new round
         await this.genesisStartRound();
-        await this.delay( 6 * 60 * 1000);
+        await this.delay( 5 * 60 * 1000);
         await this.genesisLockRound();
         do {
           try {
-            await this.delay(6* 60 * 1000 );
+            await this.delay(5* 60 * 1000 );
             await this.executeRound();
           } catch (e) {
             logger.error(
@@ -310,7 +310,7 @@ export class ExecuteRoundWorkerService {
       console.log(("zzzzzzzzzzzz"));
       
       // delay 12 seconds (buffer time)
-      await this.delay(12 * 1000);
+      //await this.delay(60 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::genesisStartRound error=${e.message}`
@@ -439,7 +439,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-      await this.delay(12 * 1000);
+      //await this.delay(12 * 1000);
     } catch (e) {
       throw e;
     }
@@ -562,7 +562,7 @@ export class ExecuteRoundWorkerService {
         )}`
       );
 
-      await this.delay(12 * 1000);
+     // await this.delay(12 * 1000);
     } catch (e) {
       throw e;
     }
@@ -667,7 +667,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-      await this.delay(12 * 1000);
+      //await this.delay(12 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::pause zz error=${e.message}`
@@ -771,7 +771,7 @@ export class ExecuteRoundWorkerService {
       );
 
       // delay 5 seconds (interval time)
-      await this.delay(12 * 1000);
+     // await this.delay(12 * 1000);
     } catch (e) {
       logger.error(
         `${this.currency.network} ExecuteRoundWorkerService::unpause error=${e.message}`
