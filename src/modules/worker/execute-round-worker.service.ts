@@ -97,7 +97,10 @@ export class ExecuteRoundWorkerService {
       try {
 
         let isWaiting = await this.crawlData();
+        console.log("isWaiting", isWaiting);
+        
         if (isWaiting) {
+          console.log("this.currency.averageBlockTime", this.currency.averageBlockTime)
           await this.delay(this.currency.averageBlockTime);
         } else {
           await this.delay(5000); // 5 seconds, to avoid too many requests
@@ -113,7 +116,7 @@ export class ExecuteRoundWorkerService {
           );
         } else {
           logger.error(
-            `${this.currency.network} ExecuteRoundWorkerService::doCrawlJob ${e}`
+            `${this.currency.network} ExecuteRoundWorkerService::doCrawlJob 3 ${e}`
           );
           this.notificationService.notificationException(
             `${this.currency.network} ExecuteRoundWorkerService::doCrawlJob err=${e.message}`
@@ -818,7 +821,8 @@ export class ExecuteRoundWorkerService {
         this.currency.chainId,
         this._web3
       );
-
+        console.log("latestBlock");
+        
       
       if (!latestBlockInDb || latestBlockInDb.blockNumber == 0) {
         latestBlockInDb = new LatestBlock();
@@ -895,7 +899,8 @@ export class ExecuteRoundWorkerService {
         fromBlock: _fromBlock,
         toBlock: _toBlock,
       };
-
+      console.log("1213");
+      
       let [
         startRoundEvents,
         lockRoundEvents,
@@ -915,7 +920,8 @@ export class ExecuteRoundWorkerService {
       ]);
 
       let status = _isTemp ? OnchainStatus.CONFIRMING : OnchainStatus.CONFIRMED;
-
+      console.log("handleStartRoundEvents");
+      
       await Promise.all([
         this.handleStartRoundEvents(
           _manager,
@@ -955,6 +961,7 @@ export class ExecuteRoundWorkerService {
       }
       latestBlock.blockNumber = _toBlock;
       await _manager.save(latestBlock);
+      return
     }
   }
 
@@ -987,15 +994,15 @@ export class ExecuteRoundWorkerService {
             .execute();
 
           logger.info(
-            `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents ${this._executeRoundContract._address} endRoundInfo ${endRoundInfo} at block ${event.blockNumber}`
+            `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents  1${this._executeRoundContract._address} endRoundInfo ${endRoundInfo} at block ${event.blockNumber}`
           );
           logger.info(
-            `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status}`
+            `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents 2 ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status}`
           );
           logger.info(
             `${
               this.currency.network
-            } ExecuteRoundWorkerService::handleEndRoundEvents ${
+            } ExecuteRoundWorkerService::handleEndRoundEvents 3 ${
               this._executeRoundContract._address
             } up or down = ${
               Number(endRoundInfo.lockPrice) > Number(endRoundInfo.closePrice)
@@ -1004,7 +1011,7 @@ export class ExecuteRoundWorkerService {
           logger.info(
             `${
               this.currency.network
-            } ExecuteRoundWorkerService::handleEndRoundEvents ${
+            } ExecuteRoundWorkerService::handleEndRoundEvents 4 ${
               this._executeRoundContract._address
             } up or down = ${
               Number(endRoundInfo.lockPrice) < Number(endRoundInfo.closePrice)
@@ -1038,7 +1045,7 @@ export class ExecuteRoundWorkerService {
               })
               .execute();
             logger.info(
-              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update UP WIN bet status`
+              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents 5 ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update UP WIN bet status`
             );
           } else if (
             Number(endRoundInfo.lockPrice) > Number(endRoundInfo.closePrice)
@@ -1068,7 +1075,7 @@ export class ExecuteRoundWorkerService {
               .execute();
 
             logger.info(
-              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update DOWN WIN bet status`
+              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents 6 ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update DOWN WIN bet status`
             );
           } else {
             await getConnection()
@@ -1083,7 +1090,7 @@ export class ExecuteRoundWorkerService {
               .execute();
 
             logger.info(
-              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update WIN bet status`
+              `${this.currency.network} ExecuteRoundWorkerService::handleEndRoundEvents 7 ${this._executeRoundContract._address} EndRound ${event.returnValues.epoch} ${_status} update WIN bet status`
             );
           }
           let totalWin = await _manager

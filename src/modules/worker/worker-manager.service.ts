@@ -73,14 +73,16 @@ export class WorkerManagerService {
             );
           }
         };
-
-        this.runWorker(runExecuteRoundWorker);
+        console.log("run worker again")
+        await this.runWorker(runExecuteRoundWorker);
       }
     }
   }
 
   runWorker(_cb: () => void) {
     try {
+      console.log("call back");
+      
       _cb();
     } catch (error) {
       logger.error(error);
