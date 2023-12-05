@@ -88,8 +88,8 @@ export class ExecuteRoundWorkerService {
       );
       return;
     }
-    await this.doCrawJob();
-    await this.doJob();
+     this.doCrawJob();
+     this.doJob();
   }
 
   async doCrawJob() {
