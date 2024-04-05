@@ -124,11 +124,11 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser(process.env.SECRET_SET_COOKIE || "secret"));
     console.log("process.env.NODE_ENV", process.env.NODE_ENV)
-    await app.init();
+    await app.listen(process.env.PORT);
     //   const privateKey = fs.readFileSync('sslcert/server.key', 'utf8');
     //   const certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
     //  const httpsOptions = { key: privateKey, cert: certificate };
-    http.createServer(server).listen(process.env.PORT || 3000);
+    //http.createServer(server).listen(process.env.PORT || 3000);
     //   https.createServer(httpsOptions, server).listen(process.env.HTTPS_PORT || 443);
     debugLog(
       `Application is running on y: ${process.env.PORT || 3000} and ${

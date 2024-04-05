@@ -10,8 +10,9 @@ COPY . .
 
 RUN npm run build
 
-ENV NODE_ENV dev-worker
-ENV PORT 3301
-ENV HTTPS_PORT 4443
+ENV NODE_ENV dev-api
+ENV PORT 3302
+ENV HTTPS_PORT 4003
 
-CMD ["npm", "run", "start:prod-worker"]
+CMD ["npm", "run", "start:dev"]
+
